@@ -1,4 +1,4 @@
-import React, { useReducer, useRef } from 'react';
+import React, { useReducer, useRef, useEffect } from 'react';
 import { render } from 'react-dom';
 
 import './style.css';
@@ -24,20 +24,45 @@ const todoReducer = (state, action) => {
           ]
         : state;
     }
+    case 'TOGGLE_COMPLETE': {
+      return state.map((item) =>
+        item.id === action.id ? { ...item, complete: !item.complete } : item
+      );
+    }
+    case 'DELETE_TODO': {
+      return state.filter((x) => x.id !== action.id);
+    }
+    case 'CLEAR_TODOS': {
+      return [];
+    }
   }
 };
 
 const Todo = () => {
   const inputRef = useRef();
   const [todos, dispatch] = useReducer(todoReducer, initialState);
+  const completedTodos = todos.filter((todo) => todo.complete);
+  useEffect(() => {
+    //inputRef.current.focus();
+    document.title = `You have ${completedTodos.length} items completed!`;
+  });
   function addTodo(event) {
-    event.preventDefault();//Prevents the page from refreshing when hitting submit
+    event.preventDefault(); //Prevents the page from refreshing when hitting submit
     dispatch({
       type: 'ADD_TODO',
       name: inputRef.current.value,
       complete: false,
     });
     inputRef.current.value = '';
+  }
+  function toggleComplete(id) {
+    dispatch({ type: 'TOGGLE_COMPLETE', id });
+  }
+  function deleteTodo(id) {
+    dispatch({ type: 'DELETE_TODO', id });
+  }
+  function clearTodos() {
+    dispatch({ type: 'CLEAR_TODOS' });
   }
   return (
     <>
@@ -53,15 +78,25 @@ const Todo = () => {
       </div>
       <div className="column-container">
         {todos.map((todo) => (
-          <div key={todo.id} alt={todo.id} className="column-item">
+          <div
+            className={`column-item ${todo.complete ? 'completed' : null}`}
+            key={todo.id}
+          >
             <div className="flex-container">
-              <div className="todo-name">{todo.name}</div>
-              <div className="todo-delete">&times;</div>
+              <div
+                className="todo-name"
+                onClick={() => toggleComplete(todo.id)}
+              >
+                {todo.name}
+              </div>
+              <div className="todo-delete" onClick={() => deleteTodo(todo.id)}>
+                &times;
+              </div>
             </div>
           </div>
         ))}
       </div>
-      <button>CLEAR TODOS</button>
+      <button onClick={() => clearTodos()}>CLEAR TODOS</button>
     </>
   );
 };
